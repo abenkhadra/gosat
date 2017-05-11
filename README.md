@@ -1,5 +1,6 @@
 # goSAT
-goSAT is an SMT solver for the theory of floating-point arithmetic.  
+goSAT is an SMT solver for the theory of floating-point arithmetic.
+More details are available in our [Report] and this [Appendix]
 
 # Overview
 goSAT is an SMT solver based on mathematical global optimization. It casts the satisfiability
@@ -9,8 +10,6 @@ the following key features:
 
 - JIT execution of SMT formulas using LLVM.
 - Integration with NLopt, a features-rich mathematical optimization backend.
-
-More details are available in our [Report] and this [Appendix]
 
 # Dependencies
 
