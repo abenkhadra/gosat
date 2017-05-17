@@ -9,27 +9,33 @@
 
 #pragma once
 
+#include "IRGen/FPIRGenerator.h"
 #include "z3++.h"
-#include <vector>
-#include <unordered_map>
 
 namespace gosat {
+class IRSymbol;
+
+class FPIRGenerator;
+
 class ModelValidator {
-    ModelValidator(z3::context *ctx, z3::expr *expr);
+public:
+    ModelValidator(const FPIRGenerator* ir_generator);
+
     virtual ~ModelValidator() = default;
-    ModelValidator(const ModelValidator &) = default;
-    ModelValidator &operator=(const ModelValidator &) = default;
-    ModelValidator &operator=(ModelValidator &&) = default;
-    bool isValid(const double *model, size_t model_size);
+
+    ModelValidator(const ModelValidator&) = default;
+
+    ModelValidator& operator=(const ModelValidator&) = default;
+
+    ModelValidator& operator=(ModelValidator&&) = default;
+
+    bool isValid(z3::expr smt_expr, const std::vector<double>& model);
 
 private:
-    void replaceVarsWithModel(z3::expr &expr, const double *model);
+    z3::expr genFPConst(z3::expr expr, SymbolKind kind, unsigned id,
+                        const std::vector<double>& model) const noexcept;
 
 private:
-    z3::context *m_ctx;
-    z3::expr *m_expr;
-    size_t m_model_size;
-    size_t m_substitute_var_idx;
-    std::unordered_map<unsigned, bool> m_visited_expr;
+    const FPIRGenerator* m_ir_gen;
 };
 }

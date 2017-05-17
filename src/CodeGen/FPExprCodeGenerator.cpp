@@ -8,24 +8,27 @@
 //
 
 #include "FPExprCodeGenerator.h"
-#include "Utils/fpa_util.h"
+#include "Utils/FPAUtils.h"
 #include <algorithm>
 
 namespace gosat {
 
 FPExprCodeGenerator::FPExprCodeGenerator() :
-    m_has_invalid_fp_const{false},
-    m_has_unsupported_expr{false} {
+        m_has_invalid_fp_const{false},
+        m_has_unsupported_expr{false}
+{
 }
 
 bool
-FPExprCodeGenerator::hasRNERoundingMode(const z3::expr &expr) const noexcept {
+FPExprCodeGenerator::hasRNERoundingMode(const z3::expr& expr) const noexcept
+{
     return expr.arg(0).decl().decl_kind() == Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN;
 }
 
 void
 FPExprCodeGenerator::genFuncCode
-    (const std::string &func_name, const z3::expr &expr) noexcept {
+        (const std::string& func_name, const z3::expr& expr) noexcept
+{
     m_func_code = "";
     m_func_code.reserve(16 * 1024);
     includeFuncHeader(func_name);
@@ -35,16 +38,20 @@ FPExprCodeGenerator::genFuncCode
 }
 
 void
-FPExprCodeGenerator::includeFuncHeader(const std::string &func_name) noexcept {
+FPExprCodeGenerator::includeFuncHeader(const std::string& func_name) noexcept
+{
     m_func_code += FPExprCodeGenerator::genFuncSignature(func_name) + "{ \n";
 }
 
 void
-FPExprCodeGenerator::includeFuncFooter() noexcept {
+FPExprCodeGenerator::includeFuncFooter() noexcept
+{
     m_func_code += "}\n";
 }
 
-const Symbol * FPExprCodeGenerator::genNumeralCode (const z3::expr &expr) {
+const Symbol*
+FPExprCodeGenerator::genNumeralCode(const z3::expr& expr)
+{
     if (expr.get_sort().sort_kind() == Z3_FLOATING_POINT_SORT) {
         unsigned signd = Z3_fpa_get_sbits(expr.ctx(), expr.get_sort());
         unsigned expo = Z3_fpa_get_ebits(expr.ctx(), expr.get_sort());
@@ -60,7 +67,7 @@ const Symbol * FPExprCodeGenerator::genNumeralCode (const z3::expr &expr) {
             return result_pair.first;
         } else {
             assert(fpa_util::isFloat64(expo, signd)
-                       && "Invalid float format!");
+                   && "Invalid float format!");
             auto result_pair = insertSymbol(SymbolKind::kFP64Const, expr);
             if (result_pair.second) {
                 double result = fpa_util::toFloat64(expr);
@@ -75,7 +82,7 @@ const Symbol * FPExprCodeGenerator::genNumeralCode (const z3::expr &expr) {
         auto result_pair = insertSymbol(SymbolKind::kFP64Const, expr);
         if (result_pair.second) {
             std::string result =
-                Z3_ast_to_string(expr.ctx(), static_cast<z3::ast>(expr));
+                    Z3_ast_to_string(expr.ctx(), static_cast<z3::ast>(expr));
             result.replace(0, 1, 1, '0');
             m_func_code += "const double ";
             m_func_code += result_pair.first->name();
@@ -86,8 +93,10 @@ const Symbol * FPExprCodeGenerator::genNumeralCode (const z3::expr &expr) {
     return nullptr;
 }
 
-const Symbol * FPExprCodeGenerator::genFuncCodeRecursive
-        (const z3::expr &expr, bool is_negated) noexcept {
+const Symbol*
+FPExprCodeGenerator::genFuncCodeRecursive
+        (const z3::expr& expr, bool is_negated) noexcept
+{
     if (!expr.is_app()) {
         // is_app <==> Z3_NUMERAL_AST || Z3_APP_AST
         m_has_unsupported_expr = true;
@@ -112,7 +121,7 @@ const Symbol * FPExprCodeGenerator::genFuncCodeRecursive
         is_negated = false;
     }
     SymbolKind kind =
-        (is_negated) ? SymbolKind::kNegatedExpr : SymbolKind::kExpr;
+            (is_negated) ? SymbolKind::kNegatedExpr : SymbolKind::kExpr;
     if (expr.decl().decl_kind() == Z3_OP_NOT && !is_negated) {
         is_negated = true;
     }
@@ -121,7 +130,7 @@ const Symbol * FPExprCodeGenerator::genFuncCodeRecursive
         return result_pair.first;
     }
     // Expr not visited before
-    std::vector<const Symbol *> arg_syms;
+    std::vector<const Symbol*> arg_syms;
     arg_syms.reserve(expr.num_args());
     for (uint i = 0; i < expr.num_args(); ++i) {
         arg_syms.push_back(genFuncCodeRecursive(expr.arg(i), is_negated));
@@ -130,52 +139,60 @@ const Symbol * FPExprCodeGenerator::genFuncCodeRecursive
     return result_pair.first;
 }
 
-const std::string & FPExprCodeGenerator::getFuncCode() const noexcept {
+const std::string&
+FPExprCodeGenerator::getFuncCode() const noexcept
+{
     return m_func_code;
 }
 
-static inline std::string genBinArgExpr
-    (const char *op, const Symbol *arg_1, const Symbol *arg_2) {
+static inline std::string
+genBinArgExpr(const char* op, const Symbol* arg_1, const Symbol* arg_2)
+{
     return std::string()
-        + arg_1->name()
-        + op
-        + arg_2->name()
-        + ";\n";
+           + arg_1->name()
+           + op
+           + arg_2->name()
+           + ";\n";
 }
 
 static std::string
-genMultiArgExpr(const char * op, std::vector<const Symbol *> &args_syms){
+genMultiArgExpr(const char* op, std::vector<const Symbol*>& args_syms)
+{
     assert(args_syms.size() >= 2 && "Invalid multi-argument expression");
     if (args_syms.size() == 2) {
         return genBinArgExpr(op, args_syms[0], args_syms[1]);
     }
     std::string result;
-    for (int i = 0; i < args_syms.size() - 1; ++i) {
+    for (unsigned i = 0; i < args_syms.size() - 1; ++i) {
         result += args_syms[i]->name();
         result += op;
     }
     return result + args_syms[args_syms.size() - 1]->name() + ";\n";
 }
 
-static inline std::string genBinArgCompExpr
-    (const char *op, const Symbol *arg_1, const Symbol *arg_2) {
+static inline
+std::string genBinArgCompExpr
+        (const char* op, const Symbol* arg_1, const Symbol* arg_2)
+{
     return std::string("(")
-        + arg_1->name()
-        + op
-        + arg_2->name()
-        + ")"
-        + "? 0: "
-        + CodeGenStr::kFunDis
-        + "("
-        + arg_1->name()
-        + ","
-        + arg_2->name()
-        + ")"
-        + ";\n";
+           + arg_1->name()
+           + op
+           + arg_2->name()
+           + ")"
+           + "? 0: "
+           + CodeGenStr::kFunDis
+           + "("
+           + arg_1->name()
+           + ","
+           + arg_2->name()
+           + ")"
+           + ";\n";
 }
 
-static inline std::string genBinArgCompExpr2
-        (const char *op, const Symbol *arg_1, const Symbol *arg_2) {
+static inline
+std::string genBinArgCompExpr2
+        (const char* op, const Symbol* arg_1, const Symbol* arg_2)
+{
     return std::string("(")
            + arg_1->name()
            + op
@@ -191,29 +208,33 @@ static inline std::string genBinArgCompExpr2
            + " + 1;\n";
 }
 
-static inline std::string genEqCompExpr
-    (const Symbol *arg_1, const Symbol *arg_2) {
+static inline
+std::string genEqCompExpr(const Symbol* arg_1, const Symbol* arg_2)
+{
     return CodeGenStr::kFunDis
-        + "("
-        + arg_1->name()
-        + ","
-        + arg_2->name()
-        + ")"
-        + ";\n";
+           + "("
+           + arg_1->name()
+           + ","
+           + arg_2->name()
+           + ")"
+           + ";\n";
 }
 
-static inline std::string genNotEqCompExpr
-    (const Symbol *arg_1, const Symbol *arg_2) {
+static inline
+std::string genNotEqCompExpr(const Symbol* arg_1, const Symbol* arg_2)
+{
     return std::string("(")
-        + arg_1->name()
-        + " != "
-        + arg_2->name()
-        + ")"
-        + "? 0: 1 ;\n";
+           + arg_1->name()
+           + " != "
+           + arg_2->name()
+           + ")"
+           + "? 0: 1 ;\n";
 }
 
-void FPExprCodeGenerator::genExprCode
-    (const Symbol *expr_sym, std::vector<const Symbol *> &args_syms) noexcept {
+void
+FPExprCodeGenerator::genExprCode(const Symbol* expr_sym,
+                                 std::vector<const Symbol*>& args_syms) noexcept
+{
     m_func_code.append("const double ");
     m_func_code.append(expr_sym->name());
     m_func_code.append(" = ");
@@ -235,14 +256,14 @@ void FPExprCodeGenerator::genExprCode
         case Z3_OP_FPA_EQ:
             if (expr_sym->isNegated())
                 m_func_code.append
-                    (genNotEqCompExpr(args_syms[0], args_syms[1]));
+                        (genNotEqCompExpr(args_syms[0], args_syms[1]));
             else
                 m_func_code.append
-                    (genEqCompExpr(args_syms[0], args_syms[1]));
+                        (genEqCompExpr(args_syms[0], args_syms[1]));
             break;
         case Z3_OP_NOT:
             m_func_code.append
-                (std::string(args_syms[0]->name()) + ";\n");
+                    (std::string(args_syms[0]->name()) + ";\n");
             break;
         case Z3_OP_AND:
             if (expr_sym->isNegated())
@@ -259,124 +280,142 @@ void FPExprCodeGenerator::genExprCode
             // Floating point operations
         case Z3_OP_FPA_PLUS_INF:
             m_func_code.append
-                ("INFINITY;\n");
+                    ("INFINITY;\n");
             break;
         case Z3_OP_FPA_MINUS_INF:
             m_func_code.append
-                ("-INFINITY;\n");
+                    ("-INFINITY;\n");
             break;
         case Z3_OP_FPA_NAN:
             m_func_code.append
-                ("NAN;\n");
+                    ("NAN;\n");
             break;
         case Z3_OP_FPA_PLUS_ZERO:
             m_func_code.append
-                ("0;\n");
+                    ("0;\n");
             break;
         case Z3_OP_FPA_MINUS_ZERO:
             m_func_code.append
-                ("-0;\n");
+                    ("-0;\n");
             break;
         case Z3_OP_FPA_ADD:
-            m_func_code.append(genBinArgExpr(" + ", args_syms[1], args_syms[2]));
+            m_func_code.append(
+                    genBinArgExpr(" + ", args_syms[1], args_syms[2]));
             break;
         case Z3_OP_FPA_SUB:
-            m_func_code.append(genBinArgExpr(" - ", args_syms[1], args_syms[2]));
+            m_func_code.append(
+                    genBinArgExpr(" - ", args_syms[1], args_syms[2]));
             break;
         case Z3_OP_FPA_NEG:
             m_func_code.append
-                ("-" + std::string(args_syms[0]->name()) + ";\n");
+                    ("-" + std::string(args_syms[0]->name()) + ";\n");
             break;
         case Z3_OP_FPA_MUL:
-            m_func_code.append(genBinArgExpr(" * ", args_syms[1], args_syms[2]));
+            m_func_code.append(
+                    genBinArgExpr(" * ", args_syms[1], args_syms[2]));
             break;
         case Z3_OP_FPA_DIV:
-            m_func_code.append(genBinArgExpr(" / ", args_syms[1], args_syms[2]));
+            m_func_code.append(
+                    genBinArgExpr(" / ", args_syms[1], args_syms[2]));
             break;
         case Z3_OP_FPA_REM:
-            m_func_code.append(genBinArgExpr(" % ", args_syms[1], args_syms[2]));
+            m_func_code.append(
+                    genBinArgExpr(" % ", args_syms[1], args_syms[2]));
             break;
         case Z3_OP_FPA_ABS:
-            m_func_code.append("abs(" + std::string(args_syms[0]->name()) + ");\n");
+            m_func_code.append(
+                    "abs(" + std::string(args_syms[0]->name()) + ");\n");
             break;
         case Z3_OP_FPA_LT:
             if (expr_sym->isNegated())
                 m_func_code.append
-                    (genBinArgCompExpr(" >= ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr(" >= ", args_syms[0], args_syms[1]));
             else
                 m_func_code.append
-                    (genBinArgCompExpr2(" < ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr2(" < ", args_syms[0], args_syms[1]));
             break;
         case Z3_OP_FPA_GT:
             if (expr_sym->isNegated())
                 m_func_code.append
-                    (genBinArgCompExpr(" <= ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr(" <= ", args_syms[0], args_syms[1]));
             else
                 m_func_code.append
-                    (genBinArgCompExpr2(" > ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr2(" > ", args_syms[0], args_syms[1]));
             break;
         case Z3_OP_FPA_LE:
             if (expr_sym->isNegated())
                 m_func_code.append
-                    (genBinArgCompExpr2(" > ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr2(" > ", args_syms[0], args_syms[1]));
             else
                 m_func_code.append
-                    (genBinArgCompExpr(" <= ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr(" <= ", args_syms[0], args_syms[1]));
             break;
         case Z3_OP_FPA_GE:
             if (expr_sym->isNegated())
                 m_func_code.append
-                    (genBinArgCompExpr2(" < ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr2(" < ", args_syms[0], args_syms[1]));
             else
                 m_func_code.append
-                    (genBinArgCompExpr(" >= ", args_syms[0], args_syms[1]));
+                        (genBinArgCompExpr(" >= ", args_syms[0], args_syms[1]));
             break;
         case Z3_OP_FPA_TO_FP:
             m_func_code.append(
-                std::string(args_syms[args_syms.size() - 1]->name()) + ";\n");
+                    std::string(args_syms[args_syms.size() - 1]->name()) +
+                    ";\n");
             break;
         default:
             m_func_code.append(
-                "Unsupported expr:" + expr_sym->expr()->decl().name().str()
+                    "Unsupported expr:" + expr_sym->expr()->decl().name().str()
                     + "\n");
     }
 }
 
-unsigned long FPExprCodeGenerator::getVarCount() const noexcept {
+unsigned long
+FPExprCodeGenerator::getVarCount() const noexcept
+{
     return m_var_sym_vec.size();
 }
 
-std::pair<const Symbol *, bool> FPExprCodeGenerator::insertSymbol
-    (const SymbolKind kind, const z3::expr &expr) noexcept {
+std::pair<const Symbol*, bool>
+FPExprCodeGenerator::insertSymbol(const SymbolKind kind,
+                                  const z3::expr expr) noexcept
+{
     if (kind != SymbolKind::kNegatedExpr) {
         auto result = m_expr_sym_map.insert
-        ({expr.hash(), Symbol(kind, expr)});
+                ({expr.hash(), Symbol(kind, expr)});
         return {&(*result.first).second, result.second};
     } else {
-        // XXX: would that weaken hashing?
+        // XXX: would this weaken hashing?
         auto result = m_expr_sym_map.insert
-            ({expr.hash() + static_cast<unsigned>(kind), Symbol(kind, expr)});
+                ({expr.hash() + static_cast<unsigned>(kind),
+                  Symbol(kind, expr)});
         return {&(*result.first).second, result.second};
     }
 }
 
-const char *FPExprCodeGenerator::getSymbolName
-    (const SymbolKind kind, const z3::expr &expr) const noexcept {
+const char*
+FPExprCodeGenerator::getSymbolName(const SymbolKind kind,
+                                   const z3::expr& expr) const noexcept
+{
     return (*m_expr_sym_map.find(
-        expr.hash() + static_cast<unsigned>(kind))).second.name();
+            expr.hash() + static_cast<unsigned>(kind))).second.name();
 }
 
-const Symbol *FPExprCodeGenerator::findSymbol
-    (const SymbolKind kind, const z3::expr &expr) const noexcept {
-    auto
-        result = m_expr_sym_map.find(expr.hash() + static_cast<unsigned>(kind));
+const Symbol*
+FPExprCodeGenerator::findSymbol(const SymbolKind kind,
+                                const z3::expr& expr) const noexcept
+{
+    auto result = m_expr_sym_map.find(
+            expr.hash() + static_cast<unsigned>(kind));
     if (result != m_expr_sym_map.cend()) {
         return &(*result).second;
     }
     return nullptr;
 }
 
-std::string FPExprCodeGenerator::getFuncNameFrom(const std::string &file_path) {
+std::string
+FPExprCodeGenerator::getFuncNameFrom(const std::string& file_path)
+{
     size_t start_idx = file_path.rfind('/');
     size_t end_idx = file_path.rfind('.');
     if (start_idx != std::string::npos) {
@@ -387,11 +426,13 @@ std::string FPExprCodeGenerator::getFuncNameFrom(const std::string &file_path) {
     return ("");
 }
 
-std::string FPExprCodeGenerator::genFuncSignature(const std::string &func_name) {
+std::string
+FPExprCodeGenerator::genFuncSignature(const std::string& func_name)
+{
     std::string res;
     res = "double " + func_name + "(unsigned n, const double * "
-        + CodeGenStr::kFunInput
-        + ", double * grad, void * data)";
+          + CodeGenStr::kFunInput
+          + ", double * grad, void * data)";
     return res;
 }
 }

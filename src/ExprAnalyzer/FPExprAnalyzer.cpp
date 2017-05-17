@@ -8,27 +8,30 @@
 //
 
 #include "FPExprAnalyzer.h"
-#include "Utils/fpa_util.h"
+#include "Utils/FPAUtils.h"
 
 namespace gosat {
 
 FPExprAnalyzer::FPExprAnalyzer() :
-    m_float_var_count{0},
-    m_double_var_count{0},
-    m_const_count{0},
-    m_is_linear{true},
-    m_has_double_const{false},
-    m_has_float_const{false},
-    m_has_non_fp_const{false},
-    m_has_non_rne_round_mode{false},
-    m_has_unsupported_expr{false} {
+        m_float_var_count{0},
+        m_double_var_count{0},
+        m_const_count{0},
+        m_is_linear{true},
+        m_has_double_const{false},
+        m_has_float_const{false},
+        m_has_non_fp_const{false},
+        m_has_non_rne_round_mode{false},
+        m_has_unsupported_expr{false}
+{
 }
 
-bool FPExprAnalyzer::hasRNERoundingMode(const z3::expr &exp) const noexcept {
+bool FPExprAnalyzer::hasRNERoundingMode(const z3::expr& exp) const noexcept
+{
     return exp.arg(0).decl().decl_kind() == Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN;
 }
 
-void FPExprAnalyzer::analyze(const z3::expr &expr) noexcept {
+void FPExprAnalyzer::analyze(const z3::expr& expr) noexcept
+{
     //std::cout << expr << "\n";
     // FP expression can be
     //   - Unary (uninterpreted) function
@@ -91,15 +94,17 @@ void FPExprAnalyzer::analyze(const z3::expr &expr) noexcept {
     return;
 }
 
-void FPExprAnalyzer::prettyPrintSummary(const std::string &formula_name) const noexcept {
+void FPExprAnalyzer::prettyPrintSummary(
+        const std::string& formula_name) const noexcept
+{
     std::cout << "Formula: " << formula_name
-              <<"\nIs linear ("
-              << std::string((m_is_linear)? "yes": "no")
+              << "\nIs linear ("
+              << std::string((m_is_linear) ? "yes" : "no")
               << ")\nHas float variables (" << m_float_var_count
               << ")\nHas double variables (" << m_double_var_count
               << ")\nHas const values (" << m_const_count
               << ")\nHas unsupported expr ("
-              << std::string((m_has_unsupported_expr)? "yes": "no")
+              << std::string((m_has_unsupported_expr) ? "yes" : "no")
               << ")\n";
 }
 }

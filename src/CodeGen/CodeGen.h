@@ -44,25 +44,25 @@ public:
 
     virtual ~Symbol() = default;
 
-    Symbol(const Symbol &) = default;
+    Symbol(const Symbol&) = default;
 
-    Symbol &operator=(const Symbol &) = default;
+    Symbol& operator=(const Symbol&) = default;
 
-    Symbol &operator=(Symbol &&) = default;
+    Symbol& operator=(Symbol&&) = default;
 
-    explicit Symbol(SymbolKind kind, const z3::expr &expr);
+    explicit Symbol(SymbolKind kind, const z3::expr expr);
 
     SymbolKind kind() const noexcept;
 
-    const z3::expr *expr() const noexcept;
+    const z3::expr* expr() const noexcept;
 
-    const char *name() const noexcept;
+    const char* name() const noexcept;
 
     bool isNegated() const noexcept;
 
 private:
     const SymbolKind m_kind;
-    const z3::expr *m_expr;
+    const z3::expr m_expr;
     const std::string m_name;
 };
 }

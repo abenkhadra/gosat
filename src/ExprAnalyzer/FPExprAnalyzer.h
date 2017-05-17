@@ -20,13 +20,21 @@ namespace gosat {
 class FPExprAnalyzer {
 public:
     FPExprAnalyzer();
+
     virtual ~FPExprAnalyzer() = default;
-    FPExprAnalyzer(const FPExprAnalyzer &) = default;
-    FPExprAnalyzer &operator=(const FPExprAnalyzer &) = default;
-    FPExprAnalyzer &operator=(FPExprAnalyzer &&) = default;
-    bool hasRNERoundingMode(const z3::expr &exp) const noexcept;
-    void analyze(const z3::expr &expr) noexcept;
-    void prettyPrintSummary(const std::string &formula_name) const noexcept;
+
+    FPExprAnalyzer(const FPExprAnalyzer&) = default;
+
+    FPExprAnalyzer& operator=(const FPExprAnalyzer&) = default;
+
+    FPExprAnalyzer& operator=(FPExprAnalyzer&&) = default;
+
+    bool hasRNERoundingMode(const z3::expr& exp) const noexcept;
+
+    void analyze(const z3::expr& expr) noexcept;
+
+    void prettyPrintSummary(const std::string& formula_name) const noexcept;
+
 public:
     uint m_float_var_count;
     uint m_double_var_count;

@@ -15,31 +15,33 @@ static std::string kHeaderFileName = kDumpFileName + ".h";
 static std::string kCFileName = kDumpFileName + ".c";
 static std::string kApiFileName = kDumpFileName + ".api";
 static std::string kDistanceFunc =
-    "double fp64_dis(const double a, const double b) {\n"
-        "    if (a == b || isnan(a) || isnan(b)) {\n"
-        "        return 0;\n"
-        "    }\n"
-        "    const double scale = pow(2, 54);\n"
-        "    uint64_t a_uint = *(const uint64_t *)(&a);\n"
-        "    uint64_t b_uint = *(const uint64_t *)(&b);\n"
-        "    if ((a_uint & 0x8000000000000000) != (b_uint & 0x8000000000000000)) {\n"
-        "        // signs are not equal return sum\n"
-        "        return ((double)\n"
-        "        ((a_uint & 0x7FFFFFFFFFFFFFFF) + (b_uint & 0x7FFFFFFFFFFFFFFF)))/scale;\n"
-        "    }\n"
-        "    b_uint &= 0x7FFFFFFFFFFFFFFF;\n"
-        "    a_uint &= 0x7FFFFFFFFFFFFFFF;\n"
-        "    if (a_uint < b_uint) {\n"
-        "        return ((double)(b_uint - a_uint))/scale;\n"
-        "    }\n"
-        "    return ((double)(a_uint - b_uint))/scale;\n"
-        "}\n\n";
+        "double fp64_dis(const double a, const double b) {\n"
+                "    if (a == b || isnan(a) || isnan(b)) {\n"
+                "        return 0;\n"
+                "    }\n"
+                "    const double scale = pow(2, 54);\n"
+                "    uint64_t a_uint = *(const uint64_t *)(&a);\n"
+                "    uint64_t b_uint = *(const uint64_t *)(&b);\n"
+                "    if ((a_uint & 0x8000000000000000) != (b_uint & 0x8000000000000000)) {\n"
+                "        // signs are not equal return sum\n"
+                "        return ((double)\n"
+                "        ((a_uint & 0x7FFFFFFFFFFFFFFF) + (b_uint & 0x7FFFFFFFFFFFFFFF)))/scale;\n"
+                "    }\n"
+                "    b_uint &= 0x7FFFFFFFFFFFFFFF;\n"
+                "    a_uint &= 0x7FFFFFFFFFFFFFFF;\n"
+                "    if (a_uint < b_uint) {\n"
+                "        return ((double)(b_uint - a_uint))/scale;\n"
+                "    }\n"
+                "    return ((double)(a_uint - b_uint))/scale;\n"
+                "}\n\n";
 
-FPExprLibGenerator::FPExprLibGenerator() : m_api_gen_mode{
-    LibAPIGenMode::kPlainAPI} {}
+FPExprLibGenerator::FPExprLibGenerator() :
+        m_api_gen_mode{LibAPIGenMode::kPlainAPI}
+{}
 
 void
-FPExprLibGenerator::init(LibAPIGenMode mode) {
+FPExprLibGenerator::init(LibAPIGenMode mode)
+{
     m_api_gen_mode = mode;
     if (!dumpFilesExists()) {
         m_h_file.open(kHeaderFileName, std::ios::out | std::ios::trunc);
@@ -66,10 +68,11 @@ FPExprLibGenerator::init(LibAPIGenMode mode) {
 
 void
 FPExprLibGenerator::appendFunction
-    (size_t args_count,
-     const std::string &func_name,
-     const std::string &func_sig,
-     const std::string &func_def) {
+        (size_t args_count,
+         const std::string& func_name,
+         const std::string& func_sig,
+         const std::string& func_def)
+{
 
     m_h_file << func_sig << ";\n\n";
 
@@ -87,7 +90,8 @@ FPExprLibGenerator::appendFunction
 }
 
 bool
-FPExprLibGenerator::dumpFilesExists() {
+FPExprLibGenerator::dumpFilesExists()
+{
     std::ifstream h_file(kHeaderFileName.c_str());
     if (!h_file.good())
         return false;
@@ -98,7 +102,8 @@ FPExprLibGenerator::dumpFilesExists() {
     return api_file.good();
 }
 
-FPExprLibGenerator::~FPExprLibGenerator() {
+FPExprLibGenerator::~FPExprLibGenerator()
+{
     m_h_file.close();
     m_c_file.close();
     m_api_file.close();
