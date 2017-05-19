@@ -21,7 +21,8 @@ This project depends on:
 - [LLVM] for JIT execution of SMT formulas.
 - [NLopt] for finding the minima of the objective function. 
  
-The project is known to work with Z3 v4.5 and LLVM v3.9.1.
+Installing z3 and nlopt should be straightforward. As for installing LLVM, you might 
+find this [tutorial] to be useful. goSAT is known to work with Z3 v4.5 and LLVM v3.9.1.
 
 ## Building 
 
@@ -76,3 +77,4 @@ find any such cases.
   [NLopt]: <https://github.com/stevengj/nlopt>
   [report]: <https://blog.formallyapplied.com/docs/gosat.pdf>
   [appendix]: <https://blog.formallyapplied.com/posts/2017/05/gosat-faq/>
+  [tutorial]: <https://github.com/abenkhadra/llvm-pass-tutorial>
