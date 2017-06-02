@@ -76,5 +76,5 @@ find any such cases.
   [XSat]: <http://dx.doi.org/10.1007/978-3-319-41540-6_11>
   [NLopt]: <https://github.com/stevengj/nlopt>
   [report]: <https://blog.formallyapplied.com/docs/gosat.pdf>
-  [appendix]: <https://blog.formallyapplied.com/posts/2017/05/gosat-faq/>
+  [appendix]: <https://blog.formallyapplied.com/2017/05/gosat-faq/>
   [tutorial]: <https://github.com/abenkhadra/llvm-pass-tutorial>
