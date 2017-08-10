@@ -8,10 +8,10 @@ problem of FPA to a corresponding global optimization problem.
 It builds on the ideas proposed in [XSat]. Compared to XSat, we implemented 
 the following key features:
 
-- JIT execution of SMT formulas using LLVM.
+- JIT compilation of SMT formulas using LLVM.
 - Integration with NLopt, a features-rich mathematical optimization backend.
 
-More details are available in our [report] and this [appendix]
+More details are available in our FMCAD'17 [paper] (accepted) and this [appendix]
 
 ## Dependencies
 
@@ -75,6 +75,6 @@ find any such cases.
   [online]: <http://www.cs.nyu.edu/~barrett/smtlib/QF_FP_Hierarchy.zip>
   [XSat]: <http://dx.doi.org/10.1007/978-3-319-41540-6_11>
   [NLopt]: <https://github.com/stevengj/nlopt>
-  [report]: <https://blog.formallyapplied.com/docs/gosat.pdf>
+  [paper]: <https://blog.formallyapplied.com/docs/gosat.pdf>
   [appendix]: <https://blog.formallyapplied.com/2017/05/gosat-faq/>
   [tutorial]: <https://github.com/abenkhadra/llvm-pass-tutorial>
