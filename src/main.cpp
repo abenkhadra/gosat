@@ -102,6 +102,11 @@ static llvm::cl::opt<goSATAlgorithm>
                                                      "MLSL algorithm"),
                                           clEnumValEnd));
 
+static llvm::cl::opt<bool> smtlib_compliant_output(
+    "smtlib-output", llvm::cl::cat(SolverCategory),
+    llvm::cl::desc("Make output SMT-LIBv2 compliant (default false)"),
+    llvm::cl::init(false));
+
 void versionPrinter(void)
 {
     std::cout << "goSAT v0.1 \n"
@@ -204,30 +209,41 @@ int main(int argc, const char** argv)
                                  static_cast<unsigned>(model_vec.size()),
                                  model_vec.data(),
                                  &minima);
-        if (status < 0) {
-            std::cout << std::setprecision(4);
-            std::cout << func_name << ",error,"
-                      << elapsedTimeFrom(time_start) << ",INF," << status;
-        } else {
-            std::string result = (minima == 0) ? "sat" : "unsat";
-            std::cout << std::setprecision(4);
-            std::cout << func_name << "," << result << ",";
-            std::cout << elapsedTimeFrom(time_start) << ",";
-            std::cout << std::setprecision(dbl::digits10) << minima
-                      << "," << status;
-        }
-        if (minima == 0 && validate_model) {
-            gosat::ModelValidator validator(&ir_gen);
-            if (validator.isValid(smt_expr, model_vec)) {
-                std::cout << ",valid";
-            } else {
-                std::cout << ",invalid";
+        if (smtlib_compliant_output) {
+            if (status < 0) {
+                std::cout << "unknown" << std::endl;
+                return 1;
             }
+            std::cout << ((minima == 0) ? "sat" : "unsat") << std::endl;
+        } else {
+            if (status < 0) {
+                std::cout << std::setprecision(4);
+                std::cout << func_name << ",error," << elapsedTimeFrom(time_start)
+                          << ",INF," << status;
+            } else {
+                std::string result = (minima == 0) ? "sat" : "unsat";
+                std::cout << std::setprecision(4);
+                std::cout << func_name << "," << result << ",";
+                std::cout << elapsedTimeFrom(time_start) << ",";
+                std::cout << std::setprecision(dbl::digits10) << minima << ","
+                          << status;
+            }
+            if (minima == 0 && validate_model) {
+                gosat::ModelValidator validator(&ir_gen);
+                if (validator.isValid(smt_expr, model_vec)) {
+                    std::cout << ",valid";
+                } else {
+                    std::cout << ",invalid";
+                }
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     } catch (z3::exception& exp) {
         std::cerr << "Error while parsing SMTLIB file: "
                   << exp.msg() << "\n";
+        if (smtlib_compliant_output) {
+            std::cout << "unknown" << std::endl;
+        }
     }
     Z3_finalize_memory();
     return 0;
