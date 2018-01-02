@@ -1,5 +1,5 @@
 # goSAT
-goSAT is an SMT solver for the theory of floating-point arithmetic that is based 
+goSAT is an SMT solver for the theory of floating-point arithmetic (FPA) that is based 
 on global optimization.
 
 ## Overview 
@@ -13,6 +13,21 @@ the following key features:
 
 More details are available in our FMCAD'17 [paper] (accepted) and this [appendix]
 
+## Citing
+
+If you use goSAT in an academic work, please cite:
+
+```
+@inproceedings{BenKhadra2017a,
+author = {{Ben Khadra}, M Ammar and Stoffel, Dominik and Kunz, Wolfgang},
+booktitle = {Proceedings of Formal Methods in Computer-Aided Design (FMCAD'17)},
+doi = {10.23919/FMCAD.2017.8102235},
+pages = {11--14},
+title = {{goSAT: Floating-point Satisfiability as Global Optimization}},
+year = {2017}
+}
+```
+
 ## Dependencies
 
 This project depends on:
@@ -22,7 +37,7 @@ This project depends on:
 - [NLopt] for finding the minima of the objective function. 
  
 Installing z3 and nlopt should be straightforward. As for installing LLVM, you might 
-find this [tutorial] to be useful. goSAT is known to work with Z3 v4.5 and LLVM v3.9.1.
+find this [tutorial] to be useful. goSAT is known to work with z3 v4.6 and LLVM v4.0.1.
 
 ## Building 
 
@@ -56,6 +71,11 @@ can be set. goSAT supports three operation modes:
  - **Formula analysis**. A simple analysis to show the number of variables, their
  types, and other misc facts about a given SMT formula. This mode is enabled
  using `-mode=fa` option.
+
+The default output of goSAT is in csv format listing benchmark name, sat result, 
+elapsed time (seconds), minimum found, and status code returned by `nlopt`. 
+The minimum found should be zero in case of `sat`. 
+Use option `-smtlib-output` for conventional solver output which is more succinct.
 
 ## Model validation
 
