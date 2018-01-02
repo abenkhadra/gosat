@@ -68,8 +68,7 @@ static llvm::cl::opt<goSATMode>
                                                   "formula analysis"),
                                        clEnumValN(kCCodeGeneration,
                                                   "cg",
-                                                  "C code generation"),
-                                       clEnumValEnd));
+                                                  "C code generation")));
 
 static llvm::cl::opt<gosat::LibAPIGenMode>
         opt_api_dump_mode("fmt", llvm::cl::Optional,
@@ -81,8 +80,7 @@ static llvm::cl::opt<gosat::LibAPIGenMode>
                                                       "CSV dump of API (default)"),
                                            clEnumValN(gosat::kCppAPI,
                                                       "cpp",
-                                                      "C++ dump of API"),
-                                           clEnumValEnd));
+                                                      "C++ dump of API")));
 
 static llvm::cl::opt<goSATAlgorithm>
         opt_go_algorithm("alg", llvm::cl::Optional,
@@ -99,8 +97,7 @@ static llvm::cl::opt<goSATAlgorithm>
                                                      "ISRES algorithm"),
                                           clEnumValN(kMLSL,
                                                      "mlsl",
-                                                     "MLSL algorithm"),
-                                          clEnumValEnd));
+                                                     "MLSL algorithm")));
 
 static llvm::cl::opt<bool> smtlib_compliant_output(
     "smtlib-output", llvm::cl::cat(SolverCategory),
