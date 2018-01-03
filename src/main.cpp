@@ -202,10 +202,16 @@ int main(int argc, const char** argv)
         int status = 0;
         double minima = 1.0; /* minimum getValue */
         std::vector<double> model_vec(ir_gen.getVarCount(), 0.0);
-        status = nl_opt.optimize(func_ptr,
-                                 static_cast<unsigned>(model_vec.size()),
-                                 model_vec.data(),
-                                 &minima);
+        if (ir_gen.getVarCount() == 0) {
+            // const function
+            minima = (func_ptr)(0, nullptr, nullptr, nullptr);
+        } else {
+            status = nl_opt.optimize(func_ptr,
+                                     static_cast<unsigned>(model_vec.size()),
+                                     model_vec.data(),
+                                     &minima);
+        }
+
         if (smtlib_compliant_output) {
             if (status < 0) {
                 std::cout << "unknown" << std::endl;
