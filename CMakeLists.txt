@@ -3,7 +3,7 @@ project(gosat CXX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fno-rtti")
 
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0 -Wall -Wextra -Wnon-virtual-dtor -Wno-unused-parameter\
+set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0 -Wall -Wextra -Wno-unused-parameter\
     -pedantic -fno-inline -fno-omit-frame-pointer" CACHE STRING
     "Flags used by the C++ compiler for Debug builds."
     FORCE)
