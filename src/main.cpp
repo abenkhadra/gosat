@@ -117,6 +117,11 @@ inline float elapsedTimeFrom(std::chrono::steady_clock::time_point& st_time)
     return static_cast<float>(res) / 1000;
 }
 
+bool isFileExist(const char *fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
 
 int main(int argc, const char** argv)
 {
@@ -125,6 +130,11 @@ int main(int argc, const char** argv)
     llvm::cl::ParseCommandLineOptions
             (argc, argv,
              "goSAT v0.1 Copyright (c) 2017 University of Kaiserslautern\n");
+
+    if (!isFileExist(opt_input_file.c_str())) {
+        std::cerr << "Input file does not exists!" << std::endl;
+        std::exit(1);
+    }
     try {
         z3::context smt_ctx;
         z3::expr smt_expr = smt_ctx.parse_file(opt_input_file.c_str());
@@ -170,6 +180,8 @@ int main(int argc, const char** argv)
         InitializeNativeTarget();
         InitializeNativeTargetAsmPrinter();
         atexit(llvm_shutdown);
+        atexit(Z3_finalize_memory);
+
         LLVMContext context;
         std::unique_ptr<Module> module = std::make_unique<Module>(
                 StringRef(func_name), context);
@@ -241,13 +253,10 @@ int main(int argc, const char** argv)
             }
             std::cout << std::endl;
         }
-    } catch (z3::exception& exp) {
-        std::cerr << "Error while parsing SMTLIB file: "
-                  << exp.msg() << "\n";
-        if (smtlib_compliant_output) {
-            std::cout << "unknown" << std::endl;
-        }
+    } catch (const z3::exception &exp) {
+        std::cerr << "Error occurred while processing your input: "
+                  << exp.msg() << std::endl;
+        std::exit(1);
     }
-    Z3_finalize_memory();
     return 0;
 }

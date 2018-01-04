@@ -319,10 +319,9 @@ llvm::Value* FPIRGenerator::genExprIR
         case Z3_OP_FPA_TO_FP:
             return (arg_syms[arg_syms.size() - 1])->getValue();
         default:
-            std::string err = "Unsupported expr:" +
-                              expr_sym->expr()->decl().name().str() + "\n";
-            assert(err.c_str());
-            return nullptr;
+            std::cerr << "Unsupported expression: " +
+                         expr_sym->expr()->decl().name().str() + "\n";
+            std::exit(2);
     }
 }
 
