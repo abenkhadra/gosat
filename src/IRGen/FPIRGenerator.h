@@ -14,6 +14,7 @@
 #include "llvm/IR/Module.h"
 #include <llvm/IR/IRBuilder.h>
 #include <unordered_map>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
 
 namespace gosat {
 
@@ -81,6 +82,8 @@ public:
     const std::vector<std::pair<IRSymbol*, const IRSymbol*>>&
     getVarsFPAWrapped() const noexcept;
 
+    void addGlobalFunctionMappings(llvm::ExecutionEngine *engine);
+
 private:
     const IRSymbol* genFuncRecursive
             (llvm::IRBuilder<>& builder, const z3::expr expr,
@@ -123,6 +126,7 @@ private:
     bool m_has_unsupported_expr;
     llvm::Function* m_gofunc;
     llvm::Function* m_fp64_dis;
+    llvm::Function* m_isnan;
     llvm::Constant* m_const_zero;
     llvm::Constant* m_const_one;
     llvm::LLVMContext* m_ctx;

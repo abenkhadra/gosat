@@ -20,6 +20,7 @@ public:
     static const std::string kFunName;
     static const std::string kFunInput;
     static const std::string kFunDis;
+    static const std::string kFunIsNan;
 };
 
 enum class SymbolKind : unsigned {

@@ -11,7 +11,8 @@
 
 #include "z3++.h"
 
-double fp64_dis(const double a, const double b);
+double fp64_dis(double a, double b);
+double fp64_isnan(double a, double flag);
 
 namespace gosat {
 namespace fpa_util {

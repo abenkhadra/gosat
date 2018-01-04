@@ -51,6 +51,15 @@ double fp64_dis(const double a, const double b)
     return ((double) (a_uint - b_uint)) / scale;
 }
 
+double fp64_isnan(double a, double flag)
+{
+    if (flag == 0) {
+        return std::isnan(a)? 1.0: 0.0;
+    } else {
+        return std::isnan(a)? 0.0: 1.0;
+    }
+}
+
 namespace gosat {
 namespace fpa_util {
 
@@ -69,6 +78,13 @@ bool isBoolExpr(const z3::expr& expr) noexcept
         case Z3_OP_FPA_GT:
         case Z3_OP_FPA_LE:
         case Z3_OP_FPA_GE:
+        case Z3_OP_FPA_IS_NAN:
+        case Z3_OP_FPA_IS_INF:
+        case Z3_OP_FPA_IS_ZERO:
+        case Z3_OP_FPA_IS_NORMAL:
+        case Z3_OP_FPA_IS_SUBNORMAL:
+        case Z3_OP_FPA_IS_NEGATIVE:
+        case Z3_OP_FPA_IS_POSITIVE:
             return true;
         default:
             return false;

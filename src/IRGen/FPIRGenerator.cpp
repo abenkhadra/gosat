@@ -91,7 +91,7 @@ llvm::Function* FPIRGenerator::genFunction
         return m_gofunc;
     }
     m_gofunc = cast<Function>(
-            m_mod->getOrInsertFunction(CodeGenStr::kFunName,
+            m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunName),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getInt32Ty(*m_ctx),
                                        Type::getDoublePtrTy(*m_ctx),
@@ -130,12 +130,20 @@ llvm::Function* FPIRGenerator::genFunction
     m_tbaa_node = MDNode::get(*m_ctx, {md_node_3, md_node_3, md_scalar});
 
     m_fp64_dis = cast<Function>(
-            m_mod->getOrInsertFunction(CodeGenStr::kFunDis,
+            m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunDis),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy((*m_ctx)),
                                        nullptr));
+    m_isnan = cast<Function>(
+            m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunIsNan),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy((*m_ctx)),
+                                       nullptr));
+
     m_fp64_dis->setLinkage(Function::ExternalLinkage);
+    m_isnan->setLinkage(Function::ExternalLinkage);
     m_const_zero = ConstantFP::get(builder.getDoubleTy(), 0.0);
     m_const_one = ConstantFP::get(builder.getDoubleTy(), 1.0);
     auto return_val_sym = genFuncRecursive(builder, expr, false);
@@ -318,6 +326,16 @@ llvm::Value* FPIRGenerator::genExprIR
             }
         case Z3_OP_FPA_TO_FP:
             return (arg_syms[arg_syms.size() - 1])->getValue();
+        case Z3_OP_FPA_IS_NAN:
+            if (expr_sym->isNegated()) {
+                auto call_res = builder.CreateCall(m_isnan, {arg_syms[0]->getValue(), m_const_one});
+                call_res->setTailCall(false);
+                return call_res;
+            } else {
+                auto call_res = builder.CreateCall(m_isnan, {arg_syms[0]->getValue(), m_const_zero});
+                call_res->setTailCall(false);
+                return call_res;
+            }
         default:
             std::cerr << "Unsupported expression: " +
                          expr_sym->expr()->decl().name().str() + "\n";
@@ -337,7 +355,7 @@ llvm::Value* FPIRGenerator::genBinArgCmpIR
     builder.SetInsertPoint(bb_first);
     auto call_res = builder.CreateCall(m_fp64_dis, {arg_syms[0]->getValue(),
                                                     arg_syms[1]->getValue()});
-    call_res->setTailCall(true);
+    call_res->setTailCall(false);
     builder.CreateBr(bb_second);
     builder.SetInsertPoint(bb_second);
     auto phi_inst = builder.CreatePHI(builder.getDoubleTy(), 2);
@@ -358,7 +376,7 @@ llvm::Value* FPIRGenerator::genBinArgCmpIR2
     builder.SetInsertPoint(bb_first);
     auto call_res = builder.CreateCall(m_fp64_dis, {arg_syms[0]->getValue(),
                                                     arg_syms[1]->getValue()});
-    call_res->setTailCall(true);
+    call_res->setTailCall(false);
     auto dis_res = builder.CreateFAdd(call_res, m_const_one);
     builder.CreateBr(bb_second);
     builder.SetInsertPoint(bb_second);
@@ -435,5 +453,13 @@ SymMapType::const_iterator FPIRGenerator::findSymbol
         // XXX: would this weaken hashing?
         return m_expr_sym_map.find(expr->hash() + static_cast<unsigned>(kind));
     }
+}
+
+void FPIRGenerator::addGlobalFunctionMappings(llvm::ExecutionEngine *engine)
+{
+    double (*func_fp64_distance)(double, double) = fp64_dis;
+    double (*func_isnan)(double, double) = fp64_isnan;
+    engine->addGlobalMapping(this->m_fp64_dis, (void *)func_fp64_distance);
+    engine->addGlobalMapping(this->m_isnan, (void *)func_isnan);
 }
 }

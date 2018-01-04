@@ -200,8 +200,7 @@ int main(int argc, const char** argv)
                       << "\n";
             return 1;
         }
-        exec_engine->addGlobalMapping(ir_gen.getDistanceFunction(),
-                                      (void*) fp64_dis);
+        ir_gen.addGlobalFunctionMappings(exec_engine.get());
         exec_engine->finalizeObject();
         auto func_ptr = reinterpret_cast<nlopt_func>(exec_engine->
                 getPointerToFunction(ll_func_ptr));
