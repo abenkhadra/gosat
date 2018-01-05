@@ -11,7 +11,7 @@ the following key features:
 - JIT compilation of SMT formulas using LLVM.
 - Integration with NLopt, a features-rich mathematical optimization backend.
 
-More details are available in our FMCAD'17 [paper] (accepted) and this [appendix]
+More details are available in our FMCAD'17 [paper] and this [appendix]
 
 ## Citing
 
@@ -76,6 +76,11 @@ The default output of goSAT is in csv format listing benchmark name, sat result,
 elapsed time (seconds), minimum found, and status code returned by `nlopt`. 
 The minimum found should be zero in case of `sat`. 
 Use option `-smtlib-output` for conventional solver output which is more succinct.
+
+Note that goSAT is an incomplete solver which means that we can not prove an instance
+to be `unsat` even if it's actually so. Therefore, goSAT reports back either `sat` or `unknown`.
+Being incomplete, gives goSAT an edge in efficiency over conventional solvers like `z3` 
+and `mathsat`. However, this also restricts the application domains of goSAT.
 
 ## Model validation
 
