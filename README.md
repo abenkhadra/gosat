@@ -11,7 +11,7 @@ the following key features:
 - JIT compilation of SMT formulas using LLVM.
 - Integration with NLopt, a features-rich mathematical optimization backend.
 
-More details are available in our FMCAD'17 [paper] and this [appendix]
+More details are available in our FMCAD'17 [paper] and this [appendix].
 
 ## Citing
 
@@ -37,14 +37,14 @@ This project depends on:
 - [NLopt] for finding the minima of the objective function. 
  
 Installing z3 and nlopt should be straightforward. As for installing LLVM, you might 
-find this [tutorial] to be useful. goSAT is known to work with z3 v4.6 and LLVM v4.0.1.
+find this [tutorial] to be useful. goSAT is known to work with z3 v4.6, LLVM v4.0.1, nlopt v2.4.2.
 
 ## Building 
 
 You can build the project using a command like,
 
 ```bash
-cd build
+mkdir build; cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/home/gosat/local/ -DLLVM_DIR=/home/gosat/local/llvm/lib/cmake/llvm/ ..
 make
 ```
