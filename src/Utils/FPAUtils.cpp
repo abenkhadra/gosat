@@ -53,7 +53,8 @@ double fp64_dis(const double a, const double b)
 
 double fp64_isnan(double a, double flag)
 {
-    if (flag == 0) {
+    if (flag != 0) {
+        // flag set, invert result
         return std::isnan(a)? 1.0: 0.0;
     } else {
         return std::isnan(a)? 0.0: 1.0;

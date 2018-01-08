@@ -46,8 +46,7 @@ const IRSymbol* FPIRGenerator::genNumeralIR
             // TODO: handling FP32 should be configurable
             float numeral = fpa_util::toFloat32(expr);
             Value* value = ConstantFP::get(builder.getDoubleTy(), numeral);
-            auto res_pair = insertSymbol(SymbolKind::kFP32Const, expr, value,
-                                         0);
+            auto res_pair = insertSymbol(SymbolKind::kFP32Const, expr, value, 0);
             return res_pair.first;
         } else {
             assert(fpa_util::isFloat64(expo, sigd) && "Invalid float format!");
@@ -57,8 +56,7 @@ const IRSymbol* FPIRGenerator::genNumeralIR
             }
             double numeral = fpa_util::toFloat64(expr);
             Value* value = ConstantFP::get(builder.getDoubleTy(), numeral);
-            auto res_pair = insertSymbol(SymbolKind::kFP64Const, expr, value,
-                                         0);
+            auto res_pair = insertSymbol(SymbolKind::kFP64Const, expr, value, 0);
             return res_pair.first;
         }
     }
