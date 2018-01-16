@@ -9,9 +9,11 @@ It builds on the ideas proposed in [XSat]. Compared to XSat, we implemented
 the following key features:
 
 - JIT compilation of SMT formulas using LLVM.
-- Integration with NLopt, a features-rich mathematical optimization backend.
+- Integration with NLopt, a feature-rich mathematical optimization package.
 
-More details are available in our FMCAD'17 [paper] and this [appendix].
+In our experiments, goSAT demonstrated better *efficiency* compared to `z3` and `mathsat`
+by an order of magnitude or more. 
+More details are available in our FMCAD'17 [paper] and this [appendix].     
 
 ## Citing
 
@@ -37,7 +39,11 @@ This project depends on:
 - [NLopt] for finding the minima of the objective function. 
  
 Installing z3 and nlopt should be straightforward. As for installing LLVM, you might 
-find this [tutorial] to be useful. goSAT is known to work with z3 v4.6, LLVM v4.0.1, nlopt v2.4.2.
+find this [tutorial] to be useful. 
+
+goSAT is known to work with z3 v4.6, LLVM v4.0.1, nlopt v2.4.2.
+We recommend building LLVM from source as the official pre-built package might be broken.
+Specifically, we are aware of such issues on Ubuntu 16.04.
 
 ## Building 
 
@@ -77,9 +83,10 @@ elapsed time (seconds), minimum found, and status code returned by `nlopt`.
 The minimum found should be zero in case of `sat`. 
 Use option `-smtlib-output` for conventional solver output which is more succinct.
 
-Note that goSAT is an incomplete solver which means that we can not prove an instance
-to be `unsat` even if it's actually so. Therefore, goSAT reports back either `sat` or `unknown`.
-Being incomplete, gives goSAT an edge in efficiency over conventional solvers like `z3` 
+Note that goSAT relies on stochastic search which means that we can 
+not generally *prove* an instance to be `unsat` even if it is actually so. 
+Therefore, goSAT reports back either `sat` or `unknown`.
+Being stochastic, gives goSAT an edge in efficiency over conventional solvers like `z3` 
 and `mathsat`. However, this also restricts the application domains of goSAT.
 
 ## Model validation
