@@ -43,6 +43,8 @@ bool isFloat32VarDecl(const z3::expr& expr) noexcept;
 
 bool isFloat64VarDecl(const z3::expr& expr) noexcept;
 
+bool isRoundingModeApp(const z3::expr expr) noexcept;
+
 bool isBoolExpr(const z3::expr& expr) noexcept;
 
 /**

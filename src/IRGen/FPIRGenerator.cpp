@@ -25,7 +25,7 @@ namespace gosat {
 FPIRGenerator::FPIRGenerator
         (llvm::LLVMContext* context, llvm::Module* module) :
         m_has_invalid_fp_const(false),
-        m_has_unsupported_expr(false),
+        m_unsupported_smt_expr_found(false),
         m_gofunc(nullptr),
         m_ctx(context),
         m_mod(module)
@@ -155,8 +155,12 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
 {
     if (!expr.is_app()) {
         // is_app <==> Z3_NUMERAL_AST || Z3_APP_AST
-        m_has_unsupported_expr = true;
+        m_unsupported_smt_expr_found = true;
         return nullptr;
+    }
+    if (fpa_util::isRoundingModeApp(expr) &&
+        expr.decl().decl_kind() != Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN) {
+        m_unsupported_smt_expr_found = true;
     }
     if (expr.is_numeral()) {
         return genNumeralIR(builder, expr);
@@ -459,5 +463,10 @@ void FPIRGenerator::addGlobalFunctionMappings(llvm::ExecutionEngine *engine)
     double (*func_isnan)(double, double) = fp64_isnan;
     engine->addGlobalMapping(this->m_fp64_dis, (void *)func_fp64_distance);
     engine->addGlobalMapping(this->m_isnan, (void *)func_isnan);
+}
+
+bool FPIRGenerator::UnsupportedSMTExprFound(void) noexcept
+{
+    return m_unsupported_smt_expr_found;
 }
 }

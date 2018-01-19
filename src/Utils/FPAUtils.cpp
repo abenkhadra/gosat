@@ -68,6 +68,21 @@ double fp64_isnan(double a, double flag)
 namespace gosat {
 namespace fpa_util {
 
+bool isRoundingModeApp(const z3::expr expr) noexcept
+{
+    if (expr.num_args() != 0) {
+        return false;
+    }
+    if (expr.decl().decl_kind() == Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN ||
+        expr.decl().decl_kind() == Z3_OP_FPA_RM_NEAREST_TIES_TO_AWAY ||
+        expr.decl().decl_kind() == Z3_OP_FPA_RM_TOWARD_POSITIVE ||
+        expr.decl().decl_kind() == Z3_OP_FPA_RM_TOWARD_NEGATIVE ||
+        expr.decl().decl_kind() == Z3_OP_FPA_RM_TOWARD_ZERO) {
+        return true;
+    }
+    return false;
+}
+
 bool isBoolExpr(const z3::expr& expr) noexcept
 {
     switch (expr.decl().decl_kind()) {

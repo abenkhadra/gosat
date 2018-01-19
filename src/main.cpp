@@ -187,6 +187,11 @@ int main(int argc, const char** argv)
                 StringRef(func_name), context);
         gosat::FPIRGenerator ir_gen(&context, module.get());
         auto ll_func_ptr = ir_gen.genFunction(smt_expr);
+        if (ir_gen.UnsupportedSMTExprFound()) {
+            //TODO: make msg more meaningful
+            std::cout << "WARNING: unsupported smtlib2 constructs found, "
+                    "possibly wrong rounding mode?" << std::endl;
+        }
         std::string err_str;
         std::unique_ptr<ExecutionEngine> exec_engine(
                 EngineBuilder(std::move(module))
