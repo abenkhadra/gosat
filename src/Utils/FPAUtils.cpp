@@ -31,8 +31,12 @@ double fp64_dis(const double a, const double b)
      * 0 00000000 00000000000000000000000 +o
      */
 
-    if (a == b || std::isnan(a) || std::isnan(b)) {
+    if (a == b) {
         return 0;
+    }
+    if ( std::isnan(a) || std::isnan(b)) {
+        // any non-zero should do
+        return 1024;
     }
     const double scale = pow(2, 54);
     uint64_t a_uint = *(const uint64_t*) (&a);
