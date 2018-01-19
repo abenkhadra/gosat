@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0 -Wall -Wextra -Wno-unused-parameter\
     "Flags used by the C++ compiler for Debug builds."
     FORCE)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native" CACHE STRING
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 " CACHE STRING
     "Flags used by the C++ compiler for Release builds."
     FORCE)
 
