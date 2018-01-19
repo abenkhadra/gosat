@@ -190,8 +190,8 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
     }
     SymbolKind kind = (is_negated) ? SymbolKind::kNegatedExpr
                                    : SymbolKind::kExpr;
-    if (expr.decl().decl_kind() == Z3_OP_NOT && !is_negated) {
-        is_negated = true;
+    if (expr.decl().decl_kind() == Z3_OP_NOT) {
+        is_negated = !is_negated;
     }
     auto result_iter = findSymbol(kind, &expr);
     if (result_iter != m_expr_sym_map.cend()) {
