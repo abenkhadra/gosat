@@ -170,8 +170,9 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
 {
     if (!expr.is_app()) {
         // is_app <==> Z3_NUMERAL_AST || Z3_APP_AST
-        m_found_unsupported_smt_expr = true;
-        return nullptr;
+        std::cerr << "Unsupported expression: " +
+                     expr.decl().name().str() + "\n";
+        std::exit(2);
     }
     if (fpa_util::isRoundingModeApp(expr) &&
         expr.decl().decl_kind() != Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN) {
