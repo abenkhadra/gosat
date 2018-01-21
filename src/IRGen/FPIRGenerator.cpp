@@ -183,6 +183,7 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
     }
     if (fpa_util::isFPVar(expr)) {
         // TODO: handling FP32 might be configurable here
+        // TODO: handle FP16 and FP128 variables
         SymbolKind kind = fpa_util::isFloat32VarDecl(expr)
                           ? SymbolKind::kFP32Var : SymbolKind::kFP64Var;
         auto result_iter = findSymbol(kind, &expr);

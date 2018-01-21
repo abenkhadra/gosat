@@ -59,6 +59,7 @@ ModelValidator::genFPConst(z3::expr expr, SymbolKind kind, unsigned id,
         return z3::to_expr(expr.ctx(), var_ast);
     } else {
         assert(kind == SymbolKind::kFP64Var && "Bad variable kind!");
+        //TODO: handle FP16 and FP128 constants
         auto var_ast =
                 Z3_mk_fpa_numeral_double(expr.ctx(), model[id],
                                          Z3_mk_fpa_sort_64(expr.ctx()));
