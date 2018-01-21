@@ -11,8 +11,14 @@
 
 #include "z3++.h"
 
+// functions called by JIT engine
+
 double fp64_dis(double a, double b);
+double fp64_eq_dis(double a, double b);
+double fp64_neq_dis(double a, double b);
 double fp64_isnan(double a, double flag);
+
+// end of functions
 
 namespace gosat {
 namespace fpa_util {

@@ -14,6 +14,8 @@ namespace gosat {
 const std::string CodeGenStr::kFunName = "gofunc";
 const std::string CodeGenStr::kFunInput = "x";
 const std::string CodeGenStr::kFunDis = "fp64_dis";
+const std::string CodeGenStr::kFunEqDis = "fp64_eq_dis";
+const std::string CodeGenStr::kFunNEqDis = "fp64_neq_dis";
 const std::string CodeGenStr::kFunIsNan = "fp64_isnan";
 
 Symbol::Symbol(SymbolKind kind, const z3::expr expr) :

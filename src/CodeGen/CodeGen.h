@@ -20,6 +20,8 @@ public:
     static const std::string kFunName;
     static const std::string kFunInput;
     static const std::string kFunDis;
+    static const std::string kFunEqDis;
+    static const std::string kFunNEqDis;
     static const std::string kFunIsNan;
 };
 

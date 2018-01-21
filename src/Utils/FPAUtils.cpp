@@ -13,7 +13,8 @@
 #include <limits>
 
 /**
- * /brief Provides a scaled distance value between representations of two double variables
+ * /brief Provides a scaled distance value between representations
+ * of two double variables
  */
 double fp64_dis(const double a, const double b)
 {
@@ -55,7 +56,34 @@ double fp64_dis(const double a, const double b)
     return ((double) (a_uint - b_uint)) / scale;
 }
 
-double fp64_isnan(double a, double flag)
+double fp64_eq_dis(const double a, const double b)
+{
+    if (a == 0 && b == 0) {
+        return 0;
+    }
+    if (a != 0 && b != 0) {
+        return 0;
+    }
+    return fp64_dis(a, b);
+}
+
+double fp64_neq_dis(const double a, const double b)
+{
+    if (a == 0 && b != 0) {
+        return 0;
+    }
+    if (a != 0 && b == 0) {
+        return 0;
+    }
+    if (a != b) {
+        // it is possible that both sides are false, i.e. a != 0 && b != 0,
+        // yet a == b and thus fp64_dis(a,b) would return 0 which is unsound.
+        return fp64_dis(a, b);
+    }
+    return 1;
+}
+
+double fp64_isnan(const double a, const double flag)
 {
     if (flag != 0) {
         // flag set, invert result

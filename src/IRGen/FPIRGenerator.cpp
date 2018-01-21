@@ -25,7 +25,7 @@ namespace gosat {
 FPIRGenerator::FPIRGenerator
         (llvm::LLVMContext* context, llvm::Module* module) :
         m_has_invalid_fp_const(false),
-        m_unsupported_smt_expr_found(false),
+        m_found_unsupported_smt_expr(false),
         m_gofunc(nullptr),
         m_ctx(context),
         m_mod(module)
@@ -78,7 +78,7 @@ const IRSymbol* FPIRGenerator::genNumeralIR
 
 llvm::Function* FPIRGenerator::getDistanceFunction() const noexcept
 {
-    return m_fp64_dis;
+    return m_func_fp64_dis;
 }
 
 llvm::Function* FPIRGenerator::genFunction
@@ -127,21 +127,36 @@ llvm::Function* FPIRGenerator::genFunction
                                   md_scalar});
     m_tbaa_node = MDNode::get(*m_ctx, {md_node_3, md_node_3, md_scalar});
 
-    m_fp64_dis = cast<Function>(
+    // Initialize external functions to be linked to JIT
+    m_func_fp64_dis = cast<Function>(
             m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunDis),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy((*m_ctx)),
                                        nullptr));
-    m_isnan = cast<Function>(
+    m_func_fp64_eq_dis = cast<Function>(
+            m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunEqDis),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy((*m_ctx)),
+                                       nullptr));
+    m_func_fp64_neq_dis = cast<Function>(
+            m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunNEqDis),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy(*m_ctx),
+                                       Type::getDoubleTy((*m_ctx)),
+                                       nullptr));
+    m_func_isnan = cast<Function>(
             m_mod->getOrInsertFunction(StringRef(CodeGenStr::kFunIsNan),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy(*m_ctx),
                                        Type::getDoubleTy((*m_ctx)),
                                        nullptr));
 
-    m_fp64_dis->setLinkage(Function::ExternalLinkage);
-    m_isnan->setLinkage(Function::ExternalLinkage);
+    m_func_fp64_dis->setLinkage(Function::ExternalLinkage);
+    m_func_fp64_eq_dis->setLinkage(Function::ExternalLinkage);
+    m_func_fp64_neq_dis->setLinkage(Function::ExternalLinkage);
+    m_func_isnan->setLinkage(Function::ExternalLinkage);
     m_const_zero = ConstantFP::get(builder.getDoubleTy(), 0.0);
     m_const_one = ConstantFP::get(builder.getDoubleTy(), 1.0);
     auto return_val_sym = genFuncRecursive(builder, expr, false);
@@ -155,12 +170,12 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
 {
     if (!expr.is_app()) {
         // is_app <==> Z3_NUMERAL_AST || Z3_APP_AST
-        m_unsupported_smt_expr_found = true;
+        m_found_unsupported_smt_expr = true;
         return nullptr;
     }
     if (fpa_util::isRoundingModeApp(expr) &&
         expr.decl().decl_kind() != Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN) {
-        m_unsupported_smt_expr_found = true;
+        m_found_unsupported_smt_expr = true;
     }
     if (expr.is_numeral()) {
         return genNumeralIR(builder, expr);
@@ -187,11 +202,16 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
     }
     if (!fpa_util::isBoolExpr(expr)) {
         is_negated = false;
-    }
-    SymbolKind kind = (is_negated) ? SymbolKind::kNegatedExpr
-                                   : SymbolKind::kExpr;
-    if (expr.decl().decl_kind() == Z3_OP_NOT) {
+    } else if (expr.decl().decl_kind() == Z3_OP_NOT) {
         is_negated = !is_negated;
+    }
+    SymbolKind kind = (is_negated) ? SymbolKind::kNegatedExpr : SymbolKind::kExpr;
+    if (is_negated &&
+        expr.decl().decl_kind() != Z3_OP_NOT &&
+        expr.decl().decl_kind() != Z3_OP_AND &&
+        expr.decl().decl_kind() != Z3_OP_OR) {
+        // propagate negation according to de-morgan's
+        is_negated = false;
     }
     auto result_iter = findSymbol(kind, &expr);
     if (result_iter != m_expr_sym_map.cend()) {
@@ -231,14 +251,24 @@ llvm::Value* FPIRGenerator::genExprIR
             else
                 return m_const_one;
         case Z3_OP_EQ:
+            if (expr_sym->isNegated()) {
+                return builder.CreateCall(m_func_fp64_neq_dis,
+                                          {arg_syms[0]->getValue(),
+                                           arg_syms[1]->getValue()});
+            } else {
+                return builder.CreateCall(m_func_fp64_eq_dis,
+                                          {arg_syms[0]->getValue(),
+                                           arg_syms[1]->getValue()});
+            }
         case Z3_OP_FPA_EQ:
             if (expr_sym->isNegated()) {
                 auto result = builder.CreateFCmpONE(arg_syms[0]->getValue(),
                                                     arg_syms[1]->getValue());
                 return builder.CreateSelect(result, m_const_zero, m_const_one);
-            } else
-                return builder.CreateCall(m_fp64_dis, {arg_syms[0]->getValue(),
-                                                       arg_syms[1]->getValue()});
+            } else {
+                return builder.CreateCall(m_func_fp64_dis, {arg_syms[0]->getValue(),
+                                                            arg_syms[1]->getValue()});
+            }
         case Z3_OP_NOT:
             // Do nothing, negation is handled with de-morgans
             return arg_syms[0]->getValue();
@@ -304,13 +334,13 @@ llvm::Value* FPIRGenerator::genExprIR
             } else {
                 auto comp_res = builder.CreateFCmpOGT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR2(builder, arg_syms, comp_res);
+                return genBinArgCmpIR(builder, arg_syms, comp_res);
             }
         case Z3_OP_FPA_LE:
             if (expr_sym->isNegated()) {
                 auto comp_res = builder.CreateFCmpOGT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR2(builder, arg_syms, comp_res);
+                return genBinArgCmpIR(builder, arg_syms, comp_res);
             } else {
                 auto comp_res = builder.CreateFCmpOLE(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
@@ -320,7 +350,7 @@ llvm::Value* FPIRGenerator::genExprIR
             if (expr_sym->isNegated()) {
                 auto comp_res = builder.CreateFCmpOLT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR2(builder, arg_syms, comp_res);
+                return genBinArgCmpIR(builder, arg_syms, comp_res);
             } else {
                 auto comp_res = builder.CreateFCmpOGE(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
@@ -330,11 +360,11 @@ llvm::Value* FPIRGenerator::genExprIR
             return (arg_syms[arg_syms.size() - 1])->getValue();
         case Z3_OP_FPA_IS_NAN:
             if (expr_sym->isNegated()) {
-                auto call_res = builder.CreateCall(m_isnan, {arg_syms[0]->getValue(), m_const_one});
+                auto call_res = builder.CreateCall(m_func_isnan, {arg_syms[0]->getValue(), m_const_one});
                 call_res->setTailCall(false);
                 return call_res;
             } else {
-                auto call_res = builder.CreateCall(m_isnan, {arg_syms[0]->getValue(), m_const_zero});
+                auto call_res = builder.CreateCall(m_func_isnan, {arg_syms[0]->getValue(), m_const_zero});
                 call_res->setTailCall(false);
                 return call_res;
             }
@@ -355,7 +385,7 @@ llvm::Value* FPIRGenerator::genBinArgCmpIR
     BasicBlock* bb_cur = builder.GetInsertBlock();
     builder.CreateCondBr(comp_result, bb_second, bb_first);
     builder.SetInsertPoint(bb_first);
-    auto call_res = builder.CreateCall(m_fp64_dis, {arg_syms[0]->getValue(),
+    auto call_res = builder.CreateCall(m_func_fp64_dis, {arg_syms[0]->getValue(),
                                                     arg_syms[1]->getValue()});
     call_res->setTailCall(false);
     builder.CreateBr(bb_second);
@@ -376,7 +406,7 @@ llvm::Value* FPIRGenerator::genBinArgCmpIR2
     BasicBlock* bb_cur = builder.GetInsertBlock();
     builder.CreateCondBr(comp_result, bb_second, bb_first);
     builder.SetInsertPoint(bb_first);
-    auto call_res = builder.CreateCall(m_fp64_dis, {arg_syms[0]->getValue(),
+    auto call_res = builder.CreateCall(m_func_fp64_dis, {arg_syms[0]->getValue(),
                                                     arg_syms[1]->getValue()});
     call_res->setTailCall(false);
     auto dis_res = builder.CreateFAdd(call_res, m_const_one);
@@ -459,14 +489,18 @@ SymMapType::const_iterator FPIRGenerator::findSymbol
 
 void FPIRGenerator::addGlobalFunctionMappings(llvm::ExecutionEngine *engine)
 {
-    double (*func_fp64_distance)(double, double) = fp64_dis;
-    double (*func_isnan)(double, double) = fp64_isnan;
-    engine->addGlobalMapping(this->m_fp64_dis, (void *)func_fp64_distance);
-    engine->addGlobalMapping(this->m_isnan, (void *)func_isnan);
+    double (*func_ptr_dis)(double, double) = fp64_dis;
+    double (*func_ptr_eq_dis)(double, double) = fp64_eq_dis;
+    double (*func_ptr_neq_dis)(double, double) = fp64_neq_dis;
+    double (*func_ptr_isnan)(double, double) = fp64_isnan;
+    engine->addGlobalMapping(this->m_func_fp64_dis, (void *)func_ptr_dis);
+    engine->addGlobalMapping(this->m_func_fp64_eq_dis, (void *)func_ptr_eq_dis);
+    engine->addGlobalMapping(this->m_func_fp64_neq_dis, (void *)func_ptr_neq_dis);
+    engine->addGlobalMapping(this->m_func_isnan, (void *)func_ptr_isnan);
 }
 
-bool FPIRGenerator::UnsupportedSMTExprFound(void) noexcept
+bool FPIRGenerator::isFoundUnsupportedSMTExpr() noexcept
 {
-    return m_unsupported_smt_expr_found;
+    return m_found_unsupported_smt_expr;
 }
 }

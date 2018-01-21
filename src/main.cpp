@@ -104,7 +104,7 @@ static llvm::cl::opt<bool> smtlib_compliant_output(
     llvm::cl::desc("Make output SMT-LIBv2 compliant (default false)"),
     llvm::cl::init(false));
 
-void versionPrinter(void)
+void versionPrinter()
 {
     std::cout << "goSAT v0.1 \n"
               << "Copyright (c) 2017 University of Kaiserslautern\n";
@@ -187,10 +187,10 @@ int main(int argc, const char** argv)
                 StringRef(func_name), context);
         gosat::FPIRGenerator ir_gen(&context, module.get());
         auto ll_func_ptr = ir_gen.genFunction(smt_expr);
-        if (ir_gen.UnsupportedSMTExprFound()) {
-            //TODO: make msg more meaningful
-            std::cout << "WARNING: unsupported smtlib2 constructs found, "
-                    "possibly wrong rounding mode?" << std::endl;
+        if (ir_gen.isFoundUnsupportedSMTExpr()) {
+            //TODO: make msg more meaningful.
+            std::cout << "WARNING: unsupported smtlib construct detected! "
+                    "Perhaps it is the rounding mode?" << std::endl;
         }
         std::string err_str;
         std::unique_ptr<ExecutionEngine> exec_engine(

@@ -84,7 +84,7 @@ public:
 
     void addGlobalFunctionMappings(llvm::ExecutionEngine *engine);
 
-    bool UnsupportedSMTExprFound(void) noexcept;
+    bool isFoundUnsupportedSMTExpr() noexcept;
 
 private:
     const IRSymbol* genFuncRecursive
@@ -125,10 +125,12 @@ private:
 
 private:
     bool m_has_invalid_fp_const;
-    bool m_unsupported_smt_expr_found;
+    bool m_found_unsupported_smt_expr;
     llvm::Function* m_gofunc;
-    llvm::Function* m_fp64_dis;
-    llvm::Function* m_isnan;
+    llvm::Function* m_func_fp64_dis;
+    llvm::Function* m_func_fp64_eq_dis;
+    llvm::Function* m_func_fp64_neq_dis;
+    llvm::Function* m_func_isnan;
     llvm::Constant* m_const_zero;
     llvm::Constant* m_const_one;
     llvm::LLVMContext* m_ctx;
