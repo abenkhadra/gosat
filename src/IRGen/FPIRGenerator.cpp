@@ -336,13 +336,13 @@ llvm::Value* FPIRGenerator::genExprIR
             } else {
                 auto comp_res = builder.CreateFCmpOGT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR(builder, arg_syms, comp_res);
+                return genBinArgCmpIR2(builder, arg_syms, comp_res);
             }
         case Z3_OP_FPA_LE:
             if (expr_sym->isNegated()) {
                 auto comp_res = builder.CreateFCmpOGT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR(builder, arg_syms, comp_res);
+                return genBinArgCmpIR2(builder, arg_syms, comp_res);
             } else {
                 auto comp_res = builder.CreateFCmpOLE(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
@@ -352,7 +352,7 @@ llvm::Value* FPIRGenerator::genExprIR
             if (expr_sym->isNegated()) {
                 auto comp_res = builder.CreateFCmpOLT(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
-                return genBinArgCmpIR(builder, arg_syms, comp_res);
+                return genBinArgCmpIR2(builder, arg_syms, comp_res);
             } else {
                 auto comp_res = builder.CreateFCmpOGE(arg_syms[0]->getValue(),
                                                       arg_syms[1]->getValue());
