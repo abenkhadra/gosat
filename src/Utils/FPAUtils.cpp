@@ -62,13 +62,9 @@ double fp64_eq_dis(const double a, const double b)
         return 0;
     }
 
-    /* TODO: revisit this decision.
-     * commented out because z3 provides Z3_OP_EQ were we expect Z3_OP_FPA_EQ
-     * see wintersteiger/eq/eq-has-no-other-solution-10015.smt2
-     */
-//    if (a != 0 && b != 0) {
-//        return 0;
-//    }
+    if (a != 0 && b != 0) {
+        return 0;
+    }
 
     return fp64_dis(a, b);
 }

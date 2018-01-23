@@ -262,24 +262,8 @@ llvm::Value* FPIRGenerator::genExprIR
             else
                 return m_const_one;
         case Z3_OP_EQ:
-            if (expr_sym->isNegated()) {
-                return builder.CreateCall(m_func_fp64_neq_dis,
-                                          {arg_syms[0]->getValue(),
-                                           arg_syms[1]->getValue()});
-            } else {
-                return builder.CreateCall(m_func_fp64_eq_dis,
-                                          {arg_syms[0]->getValue(),
-                                           arg_syms[1]->getValue()});
-            }
         case Z3_OP_FPA_EQ:
-            if (expr_sym->isNegated()) {
-                auto result = builder.CreateFCmpONE(arg_syms[0]->getValue(),
-                                                    arg_syms[1]->getValue());
-                return builder.CreateSelect(result, m_const_zero, m_const_one);
-            } else {
-                return builder.CreateCall(m_func_fp64_dis, {arg_syms[0]->getValue(),
-                                                            arg_syms[1]->getValue()});
-            }
+            return genEqualityIR(builder, expr_sym, arg_syms);
         case Z3_OP_NOT:
             // Do nothing, negation is handled with de-morgans
             return arg_syms[0]->getValue();
@@ -451,6 +435,41 @@ llvm::Value* FPIRGenerator::genMultiArgMulIR
         result = builder.CreateFMul(result, arg_syms[i]->getValue());
     }
     return result;
+}
+
+llvm::Value *FPIRGenerator::genEqualityIR
+        (llvm::IRBuilder<> &builder, const IRSymbol *expr_sym,
+         std::vector<const IRSymbol *> &arg_syms) noexcept
+{
+
+    // workaround were we explicitly check the sort of the arguments,
+    // because z3 provides Z3_OP_EQ were we expect Z3_OP_FPA_EQ.
+    // See wintersteiger/eq/eq-has-no-other-solution-10015.smt2
+
+    bool is_fpa_args = (arg_syms[0]->expr()->get_sort().sort_kind() ==
+                        Z3_FLOATING_POINT_SORT);
+    assert(is_fpa_args == (arg_syms[1]->expr()->get_sort().sort_kind() ==
+                           Z3_FLOATING_POINT_SORT));
+    if (expr_sym->expr()->decl().decl_kind() == Z3_OP_FPA_EQ || is_fpa_args) {
+        if (expr_sym->isNegated()) {
+            auto result = builder.CreateFCmpONE(arg_syms[0]->getValue(),
+                                                arg_syms[1]->getValue());
+            return builder.CreateSelect(result, m_const_zero, m_const_one);
+        } else {
+            return builder.CreateCall(m_func_fp64_dis, {arg_syms[0]->getValue(),
+                                                        arg_syms[1]->getValue()});
+        }
+    }
+    // assuming Z3_OP_EQ
+    if (expr_sym->isNegated()) {
+        return builder.CreateCall(m_func_fp64_neq_dis,
+                                  {arg_syms[0]->getValue(),
+                                   arg_syms[1]->getValue()});
+    } else {
+        return builder.CreateCall(m_func_fp64_eq_dis,
+                                  {arg_syms[0]->getValue(),
+                                   arg_syms[1]->getValue()});
+    }
 }
 
 unsigned FPIRGenerator::getVarCount() const noexcept

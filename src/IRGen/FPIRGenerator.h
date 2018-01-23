@@ -116,6 +116,10 @@ private:
             (llvm::IRBuilder<>& builder,
              std::vector<const IRSymbol*>& arg_syms) noexcept;
 
+    llvm::Value *genEqualityIR
+            (llvm::IRBuilder<> &builder, const IRSymbol *expr_sym,
+             std::vector<const IRSymbol *> &arg_syms) noexcept;
+
     std::pair<IRSymbol*, bool> insertSymbol
             (const SymbolKind kind, const z3::expr expr, llvm::Value* value,
              unsigned id = 0) noexcept;
