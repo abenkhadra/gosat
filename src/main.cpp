@@ -187,11 +187,6 @@ int main(int argc, const char** argv)
                 StringRef(func_name), context);
         gosat::FPIRGenerator ir_gen(&context, module.get());
         auto ll_func_ptr = ir_gen.genFunction(smt_expr);
-        if (ir_gen.isFoundUnsupportedSMTExpr()) {
-            //TODO: make msg more meaningful.
-            std::cout << "WARNING: unsupported smtlib construct detected! "
-                    "Perhaps it is the rounding mode?" << std::endl;
-        }
         std::string err_str;
         std::unique_ptr<ExecutionEngine> exec_engine(
                 EngineBuilder(std::move(module))
@@ -227,16 +222,21 @@ int main(int argc, const char** argv)
                                      model_vec.data(),
                                      &minima);
         }
+        if (ir_gen.isFoundUnsupportedSMTExpr()) {
+            std::cout<< "unsupported\n";
 
+        }
+        std::string result = (minima == 0 && !ir_gen.isFoundUnsupportedSMTExpr())
+                             ? "sat" : "unknown";
         if (smtlib_compliant_output) {
-            std::cout << ((minima == 0) ? "sat" : "unknown") << std::endl;
+            std::cout << result << std::endl;
         } else {
             if (status < 0) {
                 std::cout << std::setprecision(4);
-                std::cout << func_name << ",unknown," << elapsedTimeFrom(time_start)
+                std::cout << func_name << "," << result << ","
+                          << elapsedTimeFrom(time_start)
                           << ",INF," << status;
             } else {
-                std::string result = (minima == 0) ? "sat" : "unknown";
                 std::cout << std::setprecision(4);
                 std::cout << func_name << "," << result << ",";
                 std::cout << elapsedTimeFrom(time_start) << ",";
@@ -256,7 +256,7 @@ int main(int argc, const char** argv)
     } catch (const z3::exception &exp) {
         std::cerr << "Error occurred while processing your input: "
                   << exp.msg() << std::endl;
-        std::exit(1);
+        std::exit(2);
     }
     return 0;
 }

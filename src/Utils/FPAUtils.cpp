@@ -148,30 +148,17 @@ bool isBoolExpr(const z3::expr& expr) noexcept
 bool
 isFloat32VarDecl(const z3::expr& expr) noexcept
 {
-    // XXX: this is ugly! no API direct way to get exponent and significand sizes
-    Z3_string decl_str =
-            Z3_ast_to_string(expr.ctx(),
-                             static_cast<z3::ast>(expr.decl().range()));
-    if (strstr(decl_str + 17, "8") != NULL) {
-        assert((strstr(decl_str + 19, "24") != NULL)
-               && "Invalid Float32 variable declaration");
-        return true;
-    }
-    return false;
+    unsigned sigd = Z3_fpa_get_sbits(expr.ctx(), expr.get_sort());
+    unsigned expo = Z3_fpa_get_ebits(expr.ctx(), expr.get_sort());
+    return isFloat32(expo, sigd)? true: false;
 }
 
 bool
 isFloat64VarDecl(const z3::expr& expr) noexcept
 {
-    // XXX: this is ugly! no direct way to get exponent and significand sizes
-    Z3_string decl_str = Z3_ast_to_string(expr.ctx(),
-                                          static_cast<z3::ast>(expr.decl().range()));
-    if (strstr(decl_str + 17, "11") != NULL) {
-        assert((strstr(decl_str + 19, "53") != NULL)
-               && "Invalid Float32 variable declaration");
-        return true;
-    }
-    return false;
+    unsigned sigd = Z3_fpa_get_sbits(expr.ctx(), expr.get_sort());
+    unsigned expo = Z3_fpa_get_ebits(expr.ctx(), expr.get_sort());
+    return isFloat64(expo, sigd)? true: false;
 }
 
 bool

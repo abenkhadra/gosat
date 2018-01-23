@@ -49,7 +49,10 @@ const IRSymbol* FPIRGenerator::genNumeralIR
             auto res_pair = insertSymbol(SymbolKind::kFP32Const, expr, value, 0);
             return res_pair.first;
         } else {
-            assert(fpa_util::isFloat64(expo, sigd) && "Invalid float format!");
+            if (!fpa_util::isFloat64(expo, sigd)) {
+                std::cerr << "unsupported\n";
+                std::exit(5);
+            }
             auto result_iter = findSymbol(SymbolKind::kFP64Const, &expr);
             if (result_iter != m_expr_sym_map.cend()) {
                 return &(*result_iter).second;
@@ -170,9 +173,8 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
 {
     if (!expr.is_app()) {
         // is_app <==> Z3_NUMERAL_AST || Z3_APP_AST
-        std::cerr << "Unsupported expression: " +
-                     expr.decl().name().str() + "\n";
-        std::exit(2);
+        std::cerr << "unsupported\n";
+        std::exit(4);
     }
     if (fpa_util::isRoundingModeApp(expr) &&
         expr.decl().decl_kind() != Z3_OP_FPA_RM_NEAREST_TIES_TO_EVEN) {
@@ -182,10 +184,17 @@ const IRSymbol* FPIRGenerator::genFuncRecursive
         return genNumeralIR(builder, expr);
     }
     if (fpa_util::isFPVar(expr)) {
-        // TODO: handling FP32 might be configurable here
         // TODO: handle FP16 and FP128 variables
-        SymbolKind kind = fpa_util::isFloat32VarDecl(expr)
-                          ? SymbolKind::kFP32Var : SymbolKind::kFP64Var;
+        SymbolKind kind;
+        if (fpa_util::isFloat32VarDecl(expr)) {
+            kind = SymbolKind::kFP32Var;
+        } else if (fpa_util::isFloat64VarDecl(expr)) {
+            kind = SymbolKind::kFP64Var;
+        } else {
+            // XXX: instead of failing directly we give it a try.
+            // The result might still be useful
+            m_found_unsupported_smt_expr = true;
+        }
         auto result_iter = findSymbol(kind, &expr);
         if (result_iter != m_expr_sym_map.cend()) {
             return &(*result_iter).second;
@@ -371,9 +380,9 @@ llvm::Value* FPIRGenerator::genExprIR
                 return call_res;
             }
         default:
-            std::cerr << "Unsupported expression: " +
+            std::cerr << "unsupported: " +
                          expr_sym->expr()->decl().name().str() + "\n";
-            std::exit(2);
+            std::exit(3);
     }
 }
 

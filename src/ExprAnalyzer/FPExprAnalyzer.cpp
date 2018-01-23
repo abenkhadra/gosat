@@ -91,7 +91,6 @@ void FPExprAnalyzer::analyze(const z3::expr& expr) noexcept
     for (uint i = 0; i < expr.num_args(); ++i) {
         analyze(expr.arg(i));
     }
-    return;
 }
 
 void FPExprAnalyzer::prettyPrintSummary(
