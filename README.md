@@ -58,19 +58,19 @@ assuming that `libnlopt` and `libz3` are installed at the prefix `${HOME}/local/
 while `llvm` is installed at `${HOME}/local/llvm`. 
 
 ## Usage
-An SMT file need to be provided using `-f` option. Additionally, operation mode
+An SMT file needs to be provided using `-f` option. Additionally, the tool operation mode
 can be set. goSAT supports three operation modes:
 
- - **Native solving**. This the default mode where a given formula is first transformed
- to an objective function in LLVM IR . Then, the objective function is jitted using MCJIT
- and solved using the NLopt backend.  This mode can be explicitly chosen 
+ - **Native solving**. This is the default mode where a given formula is first transformed
+ to an objective function in LLVM IR. Then, the objective function is jitted using MCJIT
+ and solved using the NLopt backend. This mode can be explicitly set
  using `-mode=go` option.
  
- - **Code generation**. Mimics the behavior of [XSat] where C code representing the
-  objective function is generated. 
-  Generated code needs to be compiled and solved using on of the tools we provide in `tools` folder.
-  This mode can be enabled using `-mode=cg` option which makes goSAT output 
-  an objective function in C language. Moreover, you can specify an API dump format 
+ - **Code generation**. This mode can be enabled using `-mode=cg` option.
+  It mimics the behavior of [XSat] where C code gets generated representing 
+  the objective function. 
+  Generated code needs to be compiled and solved using on of the tools we provide in 
+  `tools` folder. Moreover, you can specify an API dump format like
   `-mode=cg -fmt=plain` for generating several objective functions. The latter is useful for 
   building a library as discussed [here](tools/README.md).
 
@@ -78,10 +78,10 @@ can be set. goSAT supports three operation modes:
  types, and other misc facts about a given SMT formula. This mode is enabled
  using `-mode=fa` option.
 
-The default output of goSAT is in csv format listing benchmark name, sat result, 
+The default output of goSAT is in csv format. It lists the benchmark name, sat result, 
 elapsed time (seconds), minimum found, and status code returned by `nlopt`. 
 The minimum found should be zero in case of `sat`. 
-Use option `-smtlib-output` for conventional solver output which is more succinct.
+Use option `-smtlib-output` to obtain conventional solver output which is more succinct.
 
 Note that goSAT relies on stochastic search which means that we can 
 not generally *prove* an instance to be `unsat` even if it is actually so. 
@@ -98,7 +98,7 @@ generated model using `z3`. This can be done by providing parameter `-c`. For ex
 ./gosat -c -f formula.smt2
 ```
 
-So far, we have not encountered any invalid result. Please report to us if you 
+So far, we have not encountered any unsound result. Please report to us if you 
 find any such cases.
 
 
